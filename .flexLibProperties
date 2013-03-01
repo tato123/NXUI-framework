@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<flexLibProperties includeAllClasses="true" useMultiPlatformConfig="false" version="3">
+  <includeClasses>
+    <classEntry path="nxui.core.Nxui"/>
+    <classEntry path="nxui.display.StarlingProxy"/>
+    <classEntry path="nxui.display.View3DProxy"/>
+    <classEntry path="nxui.display.IEngineDisplayProxy"/>
+    <classEntry path="nxui.display.Scene"/>
+  </includeClasses>
+  <includeResources/>
+  <namespaceManifests/>
+</flexLibProperties>
