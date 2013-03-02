@@ -1,1 +1,0 @@
-This package is intended for scenes as they are pushed and popped

@@ -12,6 +12,7 @@ package nxui.events
 		// Define static constant.
 		public static const CONTEXT_CREATED:String = "created";
 		public static const FRAMEWORK_INITIALIZED:String = "frameworkInitialized";
+		public static const ASSETMANAGER_LOADCOMPLETE:String = "assetManagerLoadComplete";
 		
 		// Define a public variable to hold the state of the enable property.
 		public var isEnabled:Boolean;

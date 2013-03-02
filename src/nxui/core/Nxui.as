@@ -1,12 +1,17 @@
 package nxui.core
 {
 
+	import com.nxui.display.AnimationSprite;
+	import com.nxui.display.SceneProxy;
+	
 	import flash.display.Sprite;
 	import flash.display.StageAlign;
+	import flash.display.StageDisplayState;
 	import flash.display.StageScaleMode;
 	import flash.events.Event;
 	import flash.events.EventDispatcher;
 	import flash.utils.getQualifiedClassName;
+	import flash.utils.getTimer;
 	
 	import away3d.containers.View3D;
 	import away3d.core.managers.Stage3DManager;
@@ -14,10 +19,12 @@ package nxui.core
 	import away3d.events.Stage3DEvent;
 	
 	import nxui.display.IEngineDisplayProxy;
-	import nxui.events.NxuiEvent;
 	import nxui.display.Scene;
+	import nxui.events.NxuiEvent;
 	
 	import starling.core.Starling;
+	import starling.utils.AssetManager;
+
 	
 
 	/**
@@ -34,67 +41,115 @@ package nxui.core
 		private var _displayList:Array;
 		private var _sceneList:Array;
 		private var _context:Nxui;
+		private var _firstFrameComplete:Boolean = false;
+		
 		
 		// Stage manager and proxy instances
 		private var stage3DManager : Stage3DManager;
-		private var stage3DProxy : Stage3DProxy;
+		private var _stage3DProxy : Stage3DProxy;
+		
+		// Calcalate time
+		private var deltaTime:Number;
+		private var prevFrame:Number; // The time of the previous frame rendered.
 		
 		// 
 		private static var _current:Nxui;
+
 		
-		public function Nxui(root:Sprite, contextCreated:Function = null)
+		private var _animationLayer:Starling;
+		private var _contextReady:Boolean;
+		private var _fullScreen:Boolean;
+		
+		private var _assetManager:AssetManager;
+		
+		public function Nxui(root:Sprite)
 		{
 			_root = root;
+			_root.stage.align = StageAlign.TOP_LEFT;
+			_root.stage.scaleMode = StageScaleMode.NO_SCALE;
 			
 			// Init the display list and scenes
 			_displayList = new Array();
 			_sceneList = new Array();
+			_contextReady = false;
+			
+			_assetManager = new AssetManager();
 			
 			// Define a new Stage3DManager for the Stage3D objects
 			stage3DManager = Stage3DManager.getInstance(_root.stage);
 			
+
 			// Create a new Stage3D proxy to contain the separate views
-			stage3DProxy = stage3DManager.getFreeStage3DProxy();
-			stage3DProxy.addEventListener(Stage3DEvent.CONTEXT3D_CREATED, onContextCreated);
-			stage3DProxy.antiAlias = 1;
-			//stage3DProxy.color = 0x0;
-			
-			_root.stage.align = StageAlign.TOP_LEFT;
-			_root.stage.scaleMode = StageScaleMode.NO_SCALE;
+			_stage3DProxy = stage3DManager.getFreeStage3DProxy();
+			_stage3DProxy.addEventListener(Stage3DEvent.CONTEXT3D_CREATED, onContextCreated);
+			_stage3DProxy.antiAlias = 2;
+			_stage3DProxy.color = 0x0;			
 		
-			dispatchEvent(new NxuiEvent(NxuiEvent.CONTEXT_CREATED));
-			
 			_current = this;
+			
+			start();	
 		}
 		
 		public function start() : void
 		{
-			_root.stage.addEventListener(Event.ENTER_FRAME, onFrameEnter);
+			stage3DProxy.addEventListener(Event.ENTER_FRAME, onFrameEnter);
+			prevFrame = getTimer();
 		}
 		
 		public function stop() : void
 		{
-			_root.stage.removeEventListener(Event.ENTER_FRAME, onFrameEnter);
+			stage3DProxy.removeEventListener(Event.ENTER_FRAME, onFrameEnter);
 		}
 		
 		// +---------------------------------------------------------------------
 		// Event Listeners
 		// +---------------------------------------------------------------------
 		
-		public function onContextCreated(evt:Stage3DEvent=null) : void
+		public function onContextCreated(evt:Event) : void
 		{
-			dispatchEvent(evt);			
+			createAnimationLayers();	
 		}
+		
+		
 		
 		public function onFrameEnter(evt:Event ) : void
 		{
+			// Weird timing bug appears sometimes,
+			// wait until ready
+			if ( Starling.context == null ) 
+			{
+				return ;
+			}
+			if ( !_firstFrameComplete ) 
+			{
+				dispatchEvent(new NxuiEvent(NxuiEvent.FRAMEWORK_INITIALIZED));
+				_firstFrameComplete = true;
+			}
+			
+			
+			
 			stage3DProxy.clear();
 			
+			deltaTime = (getTimer() - prevFrame) * 0.001;
 			
-			// Render the content for each layer
-			if ( _sceneList.length > 0 )
+			
+			// Render the content for each layer			
+			if ( _sceneList.length > 0  )
 			{
-				Scene(_sceneList[_sceneList.length-1]).render();
+				var sceneProxy:SceneProxy = SceneProxy(_sceneList[_sceneList.length-1]) as SceneProxy;
+				var currentScene:Scene = sceneProxy.scene as Scene;
+				
+				// play animation on first pass
+				if ( !sceneProxy.visible ) 
+				{
+					currentScene.willAppear();
+					sceneProxy.visible = true;
+				}
+				else 
+				{
+					currentScene.update(deltaTime);	
+				}
+				
 			}
 			
 			// Draw each layer to the frame buffer
@@ -111,8 +166,18 @@ package nxui.core
 				}
 			}
 			
+			// animation layer
+			if ( animation2dLayer ) 
+			{
+				animation2dLayer.nextFrame();	
+			}
+			
+			
+			
+			
 			// Swap for display buffer
 			stage3DProxy.present();
+			
 		}
 
 		
@@ -178,11 +243,14 @@ package nxui.core
 		/**
 		 * Pushes a scene onto the current display hiearchy
 		 */
-		public function pushScene(scene:Scene, effects:Array=null) : void
+		public function pushScene(SceneClass:Class) : void
 		{
 			if ( _sceneList ) 
 			{
-				_sceneList.push(scene);
+				var sceneInstance:Scene = new SceneClass();				
+				
+				var sceneProxy:SceneProxy = new SceneProxy(sceneInstance);
+				_sceneList.push(sceneProxy);
 			}
 		}
 		
@@ -208,6 +276,30 @@ package nxui.core
 			}
 		}
 		
+		private function createAnimationLayers() : void
+		{
+			// Generate animation layer
+			_animationLayer =  new Starling(AnimationSprite, _root.stage, stage3DProxy.viewPort,stage3DProxy.stage3D);
+			_animationLayer.shareContext = true;
+			_animationLayer.antiAliasing = 1;			
+		}
+		
+		public function enqueue(...rawAssets) : void
+		{			
+			_assetManager.enqueue(rawAssets);
+			
+			_assetManager.loadQueue(function(ratio:Number):void
+			{
+				trace("Loading assets, progress:", ratio);
+				
+				if (ratio == 1.0)
+				{
+					dispatchEvent(new NxuiEvent(NxuiEvent.ASSETMANAGER_LOADCOMPLETE));
+				}
+					
+			});
+		}
+		
 		// +---------------------------------------------------------------------
 		// Other Get / Set
 		// +---------------------------------------------------------------------
@@ -215,8 +307,21 @@ package nxui.core
 		/** Root flash view */
 		public function get root() : Sprite { return _root;}
 		/** Current context*/
-		public function get current() :  Nxui { return _current;}
+		public static function get current() :  Nxui { return _current;}
+		/** Current context*/
+		public function get stage3DProxy() :  Stage3DProxy { return _stage3DProxy;}
+		/** Current context*/
+		public function get animation2dLayer() :  Starling { return _animationLayer;}
 		
+		public function set fullScreen(val:Boolean) : void 
+		{ 
+			_fullScreen=val; 
+			if (_fullScreen) 
+			{
+				_root.stage.displayState = StageDisplayState.FULL_SCREEN;
+			} 
+		} 
+		public function get assetManager():AssetManager	{return _assetManager;}
 		
 	}
 }
