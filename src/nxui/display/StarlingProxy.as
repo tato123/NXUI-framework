@@ -24,11 +24,10 @@ package nxui.display
 			var starlingInstance:Starling =  new Starling(root, stage, stage3DProxy.viewPort,stage3DProxy.stage3D);
 			starlingInstance.shareContext = true;
 			starlingInstance.antiAliasing = 1;
-			// Show statistics for memory usage and fps.
-			starlingInstance.showStats = true;
 			
-			// Position stats.
-			starlingInstance.showStatsAt("left", "bottom");
+			
+			
+			
 			return starlingInstance;
 		}
 		

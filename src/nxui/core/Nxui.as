@@ -82,8 +82,8 @@ package nxui.core
 			// Create a new Stage3D proxy to contain the separate views
 			_stage3DProxy = stage3DManager.getFreeStage3DProxy();
 			_stage3DProxy.addEventListener(Stage3DEvent.CONTEXT3D_CREATED, onContextCreated);
-			_stage3DProxy.antiAlias = 2;
-			_stage3DProxy.color = 0x0;			
+			_stage3DProxy.antiAlias = 8;
+			_stage3DProxy.color = 0x0;		
 		
 			_current = this;
 			
@@ -92,13 +92,13 @@ package nxui.core
 		
 		public function start() : void
 		{
-			stage3DProxy.addEventListener(Event.ENTER_FRAME, onFrameEnter);
+			_root.addEventListener(Event.ENTER_FRAME, onFrameEnter);
 			prevFrame = getTimer();
 		}
 		
 		public function stop() : void
 		{
-			stage3DProxy.removeEventListener(Event.ENTER_FRAME, onFrameEnter);
+			_root.removeEventListener(Event.ENTER_FRAME, onFrameEnter);
 		}
 		
 		// +---------------------------------------------------------------------
@@ -107,6 +107,7 @@ package nxui.core
 		
 		public function onContextCreated(evt:Event) : void
 		{
+			//
 			createAnimationLayers();	
 		}
 		
@@ -118,14 +119,22 @@ package nxui.core
 			// wait until ready
 			if ( Starling.context == null ) 
 			{
+				
 				return ;
 			}
 			if ( !_firstFrameComplete ) 
 			{
+				
 				dispatchEvent(new NxuiEvent(NxuiEvent.FRAMEWORK_INITIALIZED));
 				_firstFrameComplete = true;
 			}
 			
+			// Don't bother rendering if there isn't anything
+			// on the view stack
+			if ( _displayList.length == 0 )
+			{
+				return ;
+			}
 			
 			
 			stage3DProxy.clear();
@@ -165,13 +174,13 @@ package nxui.core
 					View3D(obj["child"]).render();
 				}
 			}
-			
+		
 			// animation layer
 			if ( animation2dLayer ) 
 			{
 				animation2dLayer.nextFrame();	
 			}
-			
+		
 			
 			
 			
@@ -280,7 +289,7 @@ package nxui.core
 		{
 			// Generate animation layer
 			_animationLayer =  new Starling(AnimationSprite, _root.stage, stage3DProxy.viewPort,stage3DProxy.stage3D);
-			_animationLayer.shareContext = true;
+			//_animationLayer.shareContext = true;
 			_animationLayer.antiAliasing = 1;			
 		}
 		
