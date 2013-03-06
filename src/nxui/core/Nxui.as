@@ -2,7 +2,13 @@ package nxui.core
 {
 
 	import com.nxui.display.AnimationSprite;
+	import com.nxui.display.LoadingSprite;
 	import com.nxui.display.SceneProxy;
+	import flash.display.Stage3D;
+	import nxui.display.SceneBase;
+	import nxui.events.SceneEvent;
+	import nxui.support.IEngineSupport;
+	import starling.utils.AssetManager;
 	
 	import flash.display.Sprite;
 	import flash.display.StageAlign;
@@ -11,82 +17,74 @@ package nxui.core
 	import flash.events.Event;
 	import flash.events.EventDispatcher;
 	import flash.utils.getQualifiedClassName;
-	import flash.utils.getTimer;
+	import flash.utils.getTimer;	
 	
-	import away3d.containers.View3D;
-	import away3d.core.managers.Stage3DManager;
-	import away3d.core.managers.Stage3DProxy;
-	import away3d.events.Stage3DEvent;
-	
-	import nxui.display.IEngineDisplayProxy;
-	import nxui.display.Scene;
+	import nxui.display.IEngineDisplayProxy;	
 	import nxui.events.NxuiEvent;
-	
-	import starling.core.Starling;
-	import starling.utils.AssetManager;
-
-	
 
 	/**
 	 * Scene simiplifies the creation of a away3d + starling project
-	 * by completly managing 
-	 * 
-	 * 
-	 * 
+	 * by completly managing the entire stack, creating rendering layers
+	 * automatically from scene objects, handling transitions, etc....
 	 */
 	public class Nxui extends EventDispatcher
 	{
 		// Current context
-		private var _root:Sprite;
-		private var _displayList:Array;
-		private var _sceneList:Array;
-		private var _context:Nxui;
+		private var _root:Sprite;		
+		private var _sceneList:Array;		
 		private var _firstFrameComplete:Boolean = false;
-		
-		
-		// Stage manager and proxy instances
-		private var stage3DManager : Stage3DManager;
-		private var _stage3DProxy : Stage3DProxy;
-		
-		// Calcalate time
+				
+		/** Calcalate time */
 		private var deltaTime:Number;
-		private var prevFrame:Number; // The time of the previous frame rendered.
-		
-		// 
+		/** The time of the previous frame rendered. */
+		private var prevFrame:Number; 	
+				
+		/** Current NXUI layer*/
 		private static var _current:Nxui;
-
-		
-		private var _animationLayer:Starling;
-		private var _contextReady:Boolean;
-		private var _fullScreen:Boolean;
-		
+		/** Set to Fullscreen*/
+		private var _fullScreen:Boolean;		
+		/** Semaphore style locking  */
+		private var _locks:int = 0;
+			
+		/** Asset Manager */
 		private var _assetManager:AssetManager;
+		/** Scene bootstrapper */
+		private var _bootstrapper:SceneBootstrapper;
+			
+		/** Get the engine started */
+		private var _engineSupport:IEngineSupport;
+		/** Stage3D */
+		private var _stage3D:Stage3D;
 		
-		public function Nxui(root:Sprite)
+		/**
+		 * Constructor for NXUI which will handle managing 
+		 * a stage3D engine by providing a boilerplate to any engine type
+		 * 
+		 * @param	root
+		 */
+		public function Nxui(root:Sprite, Engine:Class)
 		{
+			_engineSupport = new Engine();
+			_engineSupport.addEventListener(NxuiEvent.CONTEXT_CREATED, onContextCreated);
+			_stage3D = _engineSupport.initializeStage3D(_root);
+			
+			// Configure the root
 			_root = root;
 			_root.stage.align = StageAlign.TOP_LEFT;
 			_root.stage.scaleMode = StageScaleMode.NO_SCALE;
 			
-			// Init the display list and scenes
-			_displayList = new Array();
-			_sceneList = new Array();
-			_contextReady = false;
+			// Init the display list and scenes			
+			_sceneList = [];
 			
+			_bootstrapper = _bootstrapper = new SceneBootstrapper();
+			_bootstrapper.addEventListener(SceneEvent.LOAD_COMPLETE, onLoadComplete);
+			_bootstrapper.addEventListener(SceneEvent.LOAD_ERROR, onLoadError);
 			_assetManager = new AssetManager();
 			
-			// Define a new Stage3DManager for the Stage3D objects
-			stage3DManager = Stage3DManager.getInstance(_root.stage);
-			
-
-			// Create a new Stage3D proxy to contain the separate views
-			_stage3DProxy = stage3DManager.getFreeStage3DProxy();
-			_stage3DProxy.addEventListener(Stage3DEvent.CONTEXT3D_CREATED, onContextCreated);
-			_stage3DProxy.antiAlias = 8;
-			_stage3DProxy.color = 0x0;		
-		
 			_current = this;
 			
+			addEventListener(NxuiEvent.ASSETMANAGER_LOADCOMPLETE, onAssetLoadComplete);
+						
 			start();	
 		}
 		
@@ -105,88 +103,71 @@ package nxui.core
 		// Event Listeners
 		// +---------------------------------------------------------------------
 		
+		
+		/**
+		 * Creates supplemental layers that might be needed
+		 * for transitions and such
+		 * @param	evt
+		 */
 		public function onContextCreated(evt:Event) : void
 		{
 			//
-			createAnimationLayers();	
+			_engineSupport.createAnimationLayer();	
+			// 
+			_engineSupport.createLoadingLayer();		
 		}
 		
+		private function onAssetLoadComplete(evt:Event) : void
+		{
+			queueStatus(NxuiStatus.RUNNING);
+		}
 		
-		
+		/**
+		 * Frame renderer, responsible for rendering the current scene
+		 * 
+		 * 
+		 * @param	evt
+		 */
 		public function onFrameEnter(evt:Event ) : void
 		{
-			// Weird timing bug appears sometimes,
-			// wait until ready
-			if ( Starling.context == null ) 
-			{
+			
+			_engineSupport.clearScreenBuffer();
+						
+			// Render only if engines are ready
+			// otherwise display the loading screen
+			if ( isStageContextReady() ) 
+			{		
 				
-				return ;
-			}
-			if ( !_firstFrameComplete ) 
-			{
-				
-				dispatchEvent(new NxuiEvent(NxuiEvent.FRAMEWORK_INITIALIZED));
-				_firstFrameComplete = true;
-			}
-			
-			// Don't bother rendering if there isn't anything
-			// on the view stack
-			if ( _displayList.length == 0 )
-			{
-				return ;
-			}
-			
-			
-			stage3DProxy.clear();
-			
-			deltaTime = (getTimer() - prevFrame) * 0.001;
-			
-			
-			// Render the content for each layer			
-			if ( _sceneList.length > 0  )
-			{
-				var sceneProxy:SceneProxy = SceneProxy(_sceneList[_sceneList.length-1]) as SceneProxy;
-				var currentScene:Scene = sceneProxy.scene as Scene;
+				deltaTime = (getTimer() - prevFrame) * 0.001;
+						
+				// Render the content for each layer			
+				var currentScene:SceneBase = _sceneList[_sceneList.length-1] as SceneBase;				
 				
 				// play animation on first pass
-				if ( !sceneProxy.visible ) 
+				if ( !currentScene.visible ) 
 				{
 					currentScene.willAppear();
-					sceneProxy.visible = true;
+					currentScene.visible = true;
 				}
 				else 
 				{
 					currentScene.update(deltaTime);	
 				}
 				
+				_engineSupport.renderAnimationLayer();
 			}
-			
-			// Draw each layer to the frame buffer
-			for each (var obj:Object in _displayList ) 
+			else
 			{
-				
-				if ( obj["type"] == getQualifiedClassName(Starling) )
-				{
-					Starling(obj["child"]).nextFrame();
-				}
-				else if ( obj["type"] == getQualifiedClassName(View3D) )
-				{
-					View3D(obj["child"]).render();
-				}
-			}
-		
-			// animation layer
-			if ( animation2dLayer ) 
-			{
-				animation2dLayer.nextFrame();	
-			}
-		
-			
+				// Display a loading texture on the flash 
+				// display list that will hide the app until it is ready
+				_engineSupport.renderLoadingLayer();
+								
+			}			
 			
 			
 			// Swap for display buffer
-			stage3DProxy.present();
-			
+			_engineSupport.presentScreenBuffer();
+				
 		}
 
 		
@@ -195,108 +176,115 @@ package nxui.core
 		// +---------------------------------------------------------------------
 		
 		/**
+		 * Change a semaphore lock
 		 * 
+		 * @param	status
 		 */
-		public function getChildWithTag(id:String) : Object
-		{
-			for each (var child:Object in _displayList)
+		public function queueStatus(status:String ) : void
+		{			
+			switch ( status ) 
 			{
-				if ( child["id"] == id )
-				{
-					return child["child"];
-				}
+				case NxuiStatus.LOADING:
+					_locks++;
+					break;
+				case NxuiStatus.RUNNING:
+					_locks--;
+					break;	
 			}
-			return null;
-		}
-		
-		/**
-		 * Add a display child
-		 */
-		public function addChild(child:Object, id:String=null) : void
-		{
-			if ( child is Starling || child is View3D) 
-			{				
-				
-				var ref:Object = {"type":getQualifiedClassName(child), "child":child, "id":id};				
-				_displayList.push(ref);
-				
-				if ( child is View3D )
-				{					
-					_root.addChild(View3D(child));	
-				}
-				
-				 
-			}
-			else
-			{
-				throw new Error("[NXUI] Scene child must be of type starling or away3d");
-			}
-		}
-		
-		/**
-		 * Get the children 
-		 */
-		public function getChildAt(index:Number, prefetch:Number) : Object
-		{
-			return _displayList.getItemAt(index, prefetch);
-		}
-		
-		/**
-		 * Provides an immutable array instance
-		 */
-		public function getChildren() : Array
-		{
-			return _displayList.toArray();
-		}
+		}		
 		
 		/**
 		 * Pushes a scene onto the current display hiearchy
+		 * 
 		 */
 		public function pushScene(SceneClass:Class) : void
 		{
+			// Enque switches the current status to loading
+			queueStatus(NxuiStatus.LOADING);
+			
+			// Load the scene 
 			if ( _sceneList ) 
 			{
-				var sceneInstance:Scene = new SceneClass();				
-				
-				var sceneProxy:SceneProxy = new SceneProxy(sceneInstance);
-				_sceneList.push(sceneProxy);
+				_bootstrapper.loadScene(SceneClass);			
 			}
+			else 
+			{
+				throw new Error("[NXUI] Unable to load scene, scene list is null");
+			}
+		}
+		
+		/**
+		 * Pop a scene
+		 * 
+		 * @return
+		 */
+		public function popScene() : SceneBase
+		{
+			var scene:SceneBase =  _sceneList.pop();
+			scene.willDisappear();
+			scene.dispose();			
+			return scene;
 		}
 		
 		// +---------------------------------------------------------------------
 		// Dispatcher Implementation
 		// +---------------------------------------------------------------------
-		
-		public function generateLayers(children:Array) : void
+
+		/**
+		 * There are many preconditions that can define whether
+		 * a stage is actually ready to be rendered when multiple
+		 * scenes and stage3d layers are involved. Method
+		 * tries to check all those preconditions 
+		 * 
+		 * @return
+		 */
+		public function isStageContextReady() : Boolean
 		{
-			if ( children ) 
-			{
-				for each ( var child:Object in children ) 
-				{
-					if ( child is IEngineDisplayProxy)
-					{						
-						addChild(IEngineDisplayProxy(child).createInstance(_root.stage, stage3DProxy));
-					}
-					else if ( child is Object ) 
-					{
-						addChild(IEngineDisplayProxy(child["layer"]).createInstance(_root.stage, stage3DProxy), child["id"]);
-					}
-				}
-			}
-		}
-		
-		private function createAnimationLayers() : void
-		{
-			// Generate animation layer
-			_animationLayer =  new Starling(AnimationSprite, _root.stage, stage3DProxy.viewPort,stage3DProxy.stage3D);
-			//_animationLayer.shareContext = true;
-			_animationLayer.antiAliasing = 1;			
-		}
-		
-		public function enqueue(...rawAssets) : void
-		{			
-			_assetManager.enqueue(rawAssets);
 			
+			// It is ackward to see scoping brackets in a method
+			// but this is to make sure the code is clearly divided
+			// between not ready and ready
+			
+			// Not Ready
+			if ( !_engineSupport.isStageContextReady() )
+			{
+				return false;
+			}
+					
+			
+			if ( _sceneList.length == 0 )
+			{
+				return false;
+			}
+			
+			// Something is loading
+			if ( _locks > 0 ) 
+			{
+				return false;
+			}
+		
+		
+			// Ready, go ahead and flip flags and such			
+			if ( !_firstFrameComplete ) 
+			{				
+				dispatchEvent(new NxuiEvent(NxuiEvent.FRAMEWORK_INITIALIZED));
+				_firstFrameComplete = true;					
+			}
+		
+			
+			return true;
+		}		
+		
+		/**
+		 * Enqueue a global asset to the appropriate starling or away3d asset manager
+		 * 
+		 * @param	...rawAssets
+		 */
+		public function enqueue(...rawAssets) : void
+		{	
+			queueStatus(NxuiStatus.LOADING);
+			
+			_assetManager.enqueue(rawAssets);			
 			_assetManager.loadQueue(function(ratio:Number):void
 			{
 				trace("Loading assets, progress:", ratio);
@@ -304,9 +292,28 @@ package nxui.core
 				if (ratio == 1.0)
 				{
 					dispatchEvent(new NxuiEvent(NxuiEvent.ASSETMANAGER_LOADCOMPLETE));
-				}
-					
+				}					
 			});
+		}
+		
+		/**
+		 * A scene loaded succesfully
+		 * @param	evt
+		 */
+		public function onLoadComplete(evt:SceneEvent) : void
+		{
+			trace("Loading Complete");
+			_sceneList.push(evt.scenes[0]);
+		}
+		
+		/**
+		 * A scene received an error when attempting to load
+		 * @param	evt
+		 */
+		public function onLoadError(evt:SceneEvent) : void
+		{
+			trace("Loading Error");
+			throw new Error("[NXUI] An error occured loading a scene");
 		}
 		
 		// +---------------------------------------------------------------------
@@ -315,13 +322,11 @@ package nxui.core
 		
 		/** Root flash view */
 		public function get root() : Sprite { return _root;}
+		
 		/** Current context*/
 		public static function get current() :  Nxui { return _current;}
-		/** Current context*/
-		public function get stage3DProxy() :  Stage3DProxy { return _stage3DProxy;}
-		/** Current context*/
-		public function get animation2dLayer() :  Starling { return _animationLayer;}
-		
+	
+		/** Get the asset manager */
 		public function set fullScreen(val:Boolean) : void 
 		{ 
 			_fullScreen=val; 
@@ -330,7 +335,20 @@ package nxui.core
 				_root.stage.displayState = StageDisplayState.FULL_SCREEN;
 			} 
 		} 
-		public function get assetManager():AssetManager	{return _assetManager;}
 		
+		/** Get the asset manager */
+		public function get assetManager():AssetManager	{ return _assetManager; }		
+		/** Get the current engine support class */
+		public function get engineSupport() : IEngineSupport { return _engineSupport; }
 	}
+}
+
+/**
+ * Describes the status changes that can occur internally as assets, scenes, etc... are loaded
+ */
+class NxuiStatus 
+{
+	public static const RUNNING:String = "RUNNING";
+	public static const LOADING:String = "LOADING";
+	
 }

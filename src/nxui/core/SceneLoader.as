@@ -2,7 +2,7 @@ package nxui.core
 {
 
 	import flash.utils.*;
-	import nxui.display.Scene;
+	import nxui.display.SceneBase;
 	/**
 	 * ...
 	 */
@@ -15,7 +15,7 @@ package nxui.core
 			classes = new Dictionary();
 		}
 		
-		public function pushType(instance:Scene) : void
+		public function pushType(instance:SceneBase) : void
 		{
 			classes[getQualifiedClassName(instance)] = instance;
 		}

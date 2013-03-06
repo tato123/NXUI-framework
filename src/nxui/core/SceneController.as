@@ -1,21 +1,22 @@
 package nxui.core 
 {
-	import nxui.display.Scene;
+	
+	import nxui.display.SceneBase;
 	/**
 	 * ...
 	 */
 	public class SceneController implements BootStrapObject
 	{
-		private var _scene:Scene;
+		private var _scene:SceneBase;
 		private var _bootstrapper:SceneBootstrapper;
 		
-		public function SceneController(scene:Scene=null)
+		public function SceneController(scene:SceneBase=null)
 		{
 			_scene = scene;
 		}
 		
 		
-		public function get scene() : Scene
+		public function get scene() : SceneBase
 		{
 			return _scene;
 		}

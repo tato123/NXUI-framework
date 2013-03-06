@@ -11,7 +11,7 @@ package nxui.core
 	import mx.core.IFlexDisplayObject;
 	import mx.core.IMXMLObject;
 	import mx.managers.PopUpManager;
-	import nxui.display.Scene;
+	import nxui.display.SceneBase;
 	import nxui.events.SceneEvent;
 	
 	
@@ -72,7 +72,7 @@ package nxui.core
 		 */
 		private function validateScene(instance:Object) : Boolean
 		{
-			if ( instance is Scene)
+			if ( instance is SceneBase)
 			{
 				return true;
 			}
@@ -86,23 +86,27 @@ package nxui.core
 		 */
 		private function buildScenes(...scenes) : void
 		{
-			
+			// All the new scene references that were created
+			var sceneref:Array = [];
 			// 
 			for each ( var SceneClassArray:Array in scenes ) 
 			{
 				for each ( var SceneClass:Class in SceneClassArray)
 				{			
-					var instance:Scene = new SceneClass() as Scene;		
+					var instance:SceneBase = new SceneClass() as SceneBase;		
 					instance.bootstrapper = this;
 					if (validateScene(instance))
 					{
+						sceneref.push(instance);
 						loader.pushType(instance);
 					}
 				}				
 			}
 			
 			// Done Dispatch event
-			dispatchEvent(new SceneEvent(SceneEvent.LOAD_COMPLETE));		
+			var sceneEvent:SceneEvent = new SceneEvent(SceneEvent.LOAD_COMPLETE);
+			sceneEvent.scenes = sceneref;
+			dispatchEvent(sceneEvent);		
 		}
 		
 	}

@@ -9,15 +9,14 @@
     <movie width="800" />
     <movie height="600" />
     <movie version="11" />
-    <movie minorVersion="0" />
-    <movie platform="AIR" />
+    <movie minorVersion="6" />
+    <movie platform="Flash Player" />
     <movie background="#FFFFFF" />
   </output>
   <!-- Other classes to be compiled into your SWF -->
   <classpaths>
     <class path="src" />
-    <class path="\Applications\Adobe Gaming SDK 1.0.1\Frameworks\Away3D\src" />
-    <class path="\Users\jonathanfontanez\Repositories\Github\Starling-Framework\starling\src" />
+    <class path="src-samples" />
   </classpaths>
   <!-- Build options -->
   <build>
@@ -38,22 +37,25 @@
     <option useNetwork="True" />
     <option useResourceBundleMetadata="True" />
     <option warnings="True" />
-    <option verboseStackTraces="False" />
+    <option verboseStackTraces="True" />
     <option linkReport="" />
     <option loadExterns="" />
     <option staticLinkRSL="True" />
-    <option additional="-locale en_US&#xA;" />
+    <option additional="-locale en_US" />
     <option compilerConstants="" />
     <option minorVersion="" />
   </build>
   <!-- SWC Include Libraries -->
   <includeLibraries>
-    <!-- example: <element path="..." /> -->
+    <element path="lib\away3d-core-fp11_4_1_0_Alpha.swc" />
+    <element path="lib\starling.swc" />
   </includeLibraries>
   <!-- SWC Libraries -->
   <libraryPaths>
     <element path="\Applications\Adobe Gaming SDK 1.0.1\Frameworks\Feathers\swc\feathers.swc" />
     <element path="\Applications\Adobe Flash Builder 4.7\eclipse\plugins\com.adobe.flash.compiler_4.7.0.349722\AIRSDK" />
+    <element path="lib\away3d-core-fp11_4_1_0_Alpha.swc" />
+    <element path="lib\starling.swc" />
   </libraryPaths>
   <!-- External Libraries -->
   <externalLibraryPaths>
@@ -73,7 +75,7 @@
   </library>
   <!-- Class files to compile (other referenced classes will automatically be included) -->
   <compileTargets>
-    <compile path="src\nxui.as" />
+    <compile path="src-samples\nxui\debug\AppBootstrapTest.as" />
   </compileTargets>
   <!-- Paths to exclude from the Project Explorer tree -->
   <hiddenPaths>
@@ -86,8 +88,7 @@
   <!-- Other project options -->
   <options>
     <option showHiddenPaths="False" />
-    <option testMovie="Custom" />
-    <option testMovieCommand="" />
+    <option testMovie="Default" />
   </options>
   <!-- Plugin storage -->
   <storage />
