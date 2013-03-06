@@ -24,6 +24,8 @@ package nxui.events
 		public static const LOAD_ERROR:String = "loadError";
         public static const BUILD_SCENE:String = "buildscene";
 		public static const PAUSE_SCENE:String = "pausescene";
+		public static const SCENE_APPEAR:String = "onAppear";
+		public static const SCENE_DISAPPEAR:String = "onDisappear";
 		
 		
         // Define a public variable to hold the state of the enable property.

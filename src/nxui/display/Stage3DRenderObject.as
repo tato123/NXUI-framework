@@ -1,10 +1,13 @@
 package nxui.display 
 {
+	import flash.display.Stage;
+	import flash.display.Stage3D;
+	import flash.geom.Rectangle;
 	import spark.components.Group;
 	/**
 	 * ...
 	 */
-	public class Stage3DRenderObject extends Group
+	public class Stage3DRenderObject extends Group implements IEngineDisplayProxy
 	{
 		protected var _objectType:String;		
 		private var _dataProvider:Array;
@@ -45,7 +48,13 @@ package nxui.display
 			_dataProvider = val;
 		}
 		
-		
+		//+-------------------------------------------------------------
+		// Generate this object
+		//+-------------------------------------------------------------
+		public function createInstance(stage:Stage, viewPort:Rectangle, stage3D:Stage3D) : Object
+		{
+			throw new Error("[NXUI] Method createInstance should be overriden");
+		}
 	}
 
 }

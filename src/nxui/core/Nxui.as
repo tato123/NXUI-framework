@@ -5,6 +5,7 @@ package nxui.core
 	import com.nxui.display.LoadingSprite;
 	import com.nxui.display.SceneProxy;
 	import flash.display.Stage3D;
+	import flash.geom.Rectangle;
 	import nxui.display.SceneBase;
 	import nxui.events.SceneEvent;
 	import nxui.support.IEngineSupport;
@@ -64,14 +65,17 @@ package nxui.core
 		 */
 		public function Nxui(root:Sprite, Engine:Class)
 		{
-			_engineSupport = new Engine();
-			_engineSupport.addEventListener(NxuiEvent.CONTEXT_CREATED, onContextCreated);
-			_stage3D = _engineSupport.initializeStage3D(_root);
+			
 			
 			// Configure the root
 			_root = root;
 			_root.stage.align = StageAlign.TOP_LEFT;
 			_root.stage.scaleMode = StageScaleMode.NO_SCALE;
+			
+			// Start the engine
+			_engineSupport = new Engine();
+			_engineSupport.addEventListener(NxuiEvent.CONTEXT_CREATED, onContextCreated);
+			_stage3D = _engineSupport.initializeStage3D(_root);
 			
 			// Init the display list and scenes			
 			_sceneList = [];
@@ -141,19 +145,8 @@ package nxui.core
 				deltaTime = (getTimer() - prevFrame) * 0.001;
 						
 				// Render the content for each layer			
-				var currentScene:SceneBase = _sceneList[_sceneList.length-1] as SceneBase;				
-				
-				// play animation on first pass
-				if ( !currentScene.visible ) 
-				{
-					currentScene.willAppear();
-					currentScene.visible = true;
-				}
-				else 
-				{
-					currentScene.update(deltaTime);	
-				}
-				
+				var currentScene:Object = _sceneList[_sceneList.length-1];								
+				currentScene.update(deltaTime);					
 				_engineSupport.renderAnimationLayer();
 			}
 			else
@@ -302,8 +295,11 @@ package nxui.core
 		 */
 		public function onLoadComplete(evt:SceneEvent) : void
 		{
+			
 			trace("Loading Complete");
 			_sceneList.push(evt.scenes[0]);
+			evt.scenes[0].willAppear();
+			queueStatus(NxuiStatus.RUNNING);
 		}
 		
 		/**
@@ -312,8 +308,10 @@ package nxui.core
 		 */
 		public function onLoadError(evt:SceneEvent) : void
 		{
+			queueStatus(NxuiStatus.RUNNING);
 			trace("Loading Error");
 			throw new Error("[NXUI] An error occured loading a scene");
+			
 		}
 		
 		// +---------------------------------------------------------------------
@@ -340,6 +338,13 @@ package nxui.core
 		public function get assetManager():AssetManager	{ return _assetManager; }		
 		/** Get the current engine support class */
 		public function get engineSupport() : IEngineSupport { return _engineSupport; }
+		
+		/** Get the current engine support class */
+		public function get viewPort() : Rectangle { return new Rectangle(0, 0, root.width, root.height); }
+		
+			
+		/** Get the current engine support class */
+		public function get stage3D() : Stage3D { return _stage3D; }
 	}
 }
 

@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+<componentPackage>
+	<!-- components -->
+	<component id="Starling2DObject" class="nxui.support.Starling2DObject"/>	
+	<component id="View3DObject" class="nxui.support.View3DObject"/>	
+	
+	
+	
+</componentPackage>

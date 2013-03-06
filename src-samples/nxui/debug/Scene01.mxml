@@ -1,15 +1,42 @@
 <?xml version="1.0" encoding="utf-8"?>
-<nx:MixedSceneBase xmlns:nx="nxui.display.*"
+<nx:MixedScene xmlns:nx="nxui.display.*"
+			xmlns:nx2="nxui.support.starling.*"
 			xmlns:fx="http://ns.adobe.com/mxml/2009" 
 			xmlns:s="library://ns.adobe.com/flex/spark" 
-			xmlns:mx="library://ns.adobe.com/flex/mx" >
-		  	
+			xmlns:mx="library://ns.adobe.com/flex/mx" 
+			onAppear="onAppear(event)" onDisappear="onDisappear(event)">
+	
 	<fx:Metadata>
 		[SceneController("nxui.debug.MyScene")]		
 	</fx:Metadata>			
-<!--
+
+	
+	
+	<fx:Script>
+		<![CDATA[
+			import nxui.events.SceneEvent;
+			import nxui.debug.MyScene;
+			
+			[Bindable]
+			[Embed(source="smiley.png")]
+			public var sampleImage:Class;
+			
+			public function onAppear(evt:SceneEvent ) : void
+			{
+				trace("Scene is appearing");
+			}		
+			
+			public function onDisappear(evt:SceneEvent ) : void
+			{
+				trace("Scene is disappearing");
+			}		
+			
+		]]>
+	</fx:Script>
+	
+	
 	<nx:RenderGroup id="background">		
-		<nx:Stage3DRenderObject type="Image" />								
+		<nx2:Image source="{sampleImage}" />
 	</nx:RenderGroup>		
-	-->
-</nx:MixedSceneBase>
+
+</nx:MixedScene>

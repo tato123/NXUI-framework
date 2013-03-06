@@ -8,6 +8,7 @@ package nxui.display
 	import nxui.core.SceneController;
 	import flash.utils.*;
 	import nxui.events.SceneEvent;
+	import spark.components.Group;
 
 	
 	/**
@@ -18,7 +19,9 @@ package nxui.display
 	 */
 	[Event(name = "initialize", type = "nxui.events.SceneEvent")]
 	[Event(name = "onPause", type = "nxui.events.SceneEvent")]
-	public class SceneBase extends Sprite
+	[Event(name = "onAppear", type = "nxui.events.SceneEvent")]
+	[Event(name = "onDisappear", type = "nxui.events.SceneEvent")]
+	public class SceneBase extends Group
 	{
 		/** Pause Game */
 		private var _pause:Boolean;
@@ -33,7 +36,7 @@ package nxui.display
 		public function SceneBase()
 		{
 			// Assign the controller
-			assignControllerFromMetadata();	
+			//assignControllerFromMetadata();	
 			
 		}
 		
@@ -65,11 +68,10 @@ package nxui.display
 		/**
 		 * Will appear on the scene, pushing a scene does not 
 		 * necessarily make it visible
-		 * 
 		 */
 		public function willAppear() : void			
 		{
-			throw new Error("[Scene] Subclasses should override willAppear");
+			dispatchEvent(new SceneEvent(SceneEvent.SCENE_APPEAR));
 		}		
 		
 		/**
@@ -82,7 +84,7 @@ package nxui.display
 		
 		public function willDisappear() : void
 		{
-			throw new Error("[Scene] Subclasses should override willDisappear");
+			dispatchEvent(new SceneEvent(SceneEvent.SCENE_DISAPPEAR));
 		}
 		
 		

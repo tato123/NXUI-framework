@@ -14,7 +14,7 @@ package nxui.display
 	 * Render group represents a logical set of objects that
 	 * should attempt to be rendered during the same frame render pass	 
 	 */
-	public class RenderGroup extends SpriteAsset 
+	public class RenderGroup extends Group 
 	{
 		
 		public function RenderGroup() 
