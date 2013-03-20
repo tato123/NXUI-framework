@@ -1,16 +1,10 @@
 package nxui.support
 {
-	import flash.display.Stage;
-	import flash.display.Stage3D;
-	import flash.geom.Rectangle;
-	import nxui.display.IEngineDisplayProxy;
-	import nxui.display.Stage3DRenderObject;
-	import spark.components.Group;
-	
 	import away3d.cameras.Camera3D;
 	import away3d.containers.Scene3D;
 	import away3d.containers.View3D;
-	import away3d.core.managers.Stage3DProxy;
+	
+	import nxui.display.Stage3DRenderObject;
 
 	public class View3DObject extends Stage3DRenderObject
 	{
@@ -18,7 +12,7 @@ package nxui.support
 		private var scene:Scene3D;
 		
 		
-		override public function createInstance(stage:Stage, viewPort:Rectangle, stage3D:Stage3D) : Object
+		override public function createInstance() : Object
 		{
 			var viewRoot:View3D = new View3D();
 			

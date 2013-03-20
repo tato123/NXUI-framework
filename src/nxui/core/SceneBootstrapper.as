@@ -1,16 +1,9 @@
 package nxui.core 
 {
-	import flash.display.DisplayObject;
-	import flash.display.Sprite;
-	import flash.events.Event;
 	import flash.events.EventDispatcher;
-	import flash.utils.Dictionary;
-	import flash.utils.getDefinitionByName;
-	import flash.utils.getQualifiedClassName;
-	import mx.containers.Canvas;
-	import mx.core.IFlexDisplayObject;
-	import mx.core.IMXMLObject;
+	
 	import mx.managers.PopUpManager;
+	
 	import nxui.display.SceneBase;
 	import nxui.events.SceneEvent;
 	
@@ -93,7 +86,8 @@ package nxui.core
 			{
 				for each ( var SceneClass:Class in SceneClassArray)
 				{			
-					var instance:SceneBase = new SceneClass() as SceneBase;		
+					
+					var instance:SceneBase = PopUpManager.createPopUp(Nxui.current.root,SceneClass) as SceneBase;		
 					instance.bootstrapper = this;
 					if (validateScene(instance))
 					{

@@ -1,27 +1,22 @@
 package nxui.core
 {
 
-	import com.nxui.display.AnimationSprite;
-	import com.nxui.display.LoadingSprite;
-	import com.nxui.display.SceneProxy;
-	import flash.display.Stage3D;
-	import flash.geom.Rectangle;
-	import nxui.display.SceneBase;
-	import nxui.events.SceneEvent;
-	import nxui.support.IEngineSupport;
-	import starling.utils.AssetManager;
-	
 	import flash.display.Sprite;
+	import flash.display.Stage3D;
 	import flash.display.StageAlign;
 	import flash.display.StageDisplayState;
 	import flash.display.StageScaleMode;
 	import flash.events.Event;
 	import flash.events.EventDispatcher;
-	import flash.utils.getQualifiedClassName;
-	import flash.utils.getTimer;	
+	import flash.geom.Rectangle;
+	import flash.utils.getTimer;
 	
-	import nxui.display.IEngineDisplayProxy;	
+	import nxui.display.SceneBase;
 	import nxui.events.NxuiEvent;
+	import nxui.events.SceneEvent;
+	import nxui.support.IEngineSupport;
+	
+	import starling.utils.AssetManager;
 
 	/**
 	 * Scene simiplifies the creation of a away3d + starling project
@@ -65,8 +60,7 @@ package nxui.core
 		 */
 		public function Nxui(root:Sprite, Engine:Class)
 		{
-			
-			
+						
 			// Configure the root
 			_root = root;
 			_root.stage.align = StageAlign.TOP_LEFT;
@@ -147,7 +141,7 @@ package nxui.core
 				// Render the content for each layer			
 				var currentScene:Object = _sceneList[_sceneList.length-1];								
 				currentScene.update(deltaTime);					
-				_engineSupport.renderAnimationLayer();
+				//_engineSupport.renderAnimationLayer();
 			}
 			else
 			{

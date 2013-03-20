@@ -15,16 +15,4 @@
 		<nature>com.adobe.flexbuilder.project.flexlibnature</nature>
 		<nature>com.adobe.flexbuilder.project.actionscriptnature</nature>
 	</natures>
-	<linkedResources>
-		<link>
-			<name>[source path] Away3D-src</name>
-			<type>2</type>
-			<location>/Applications/Adobe Gaming SDK 1.0.1/Frameworks/Away3D/src</location>
-		</link>
-		<link>
-			<name>[source path] starling-src</name>
-			<type>2</type>
-			<location>/Users/jonathanfontanez/Repositories/Github/Starling-Framework/starling/src</location>
-		</link>
-	</linkedResources>
 </projectDescription>

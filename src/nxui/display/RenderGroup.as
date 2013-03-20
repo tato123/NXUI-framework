@@ -1,13 +1,6 @@
 package nxui.display 
 {
-	import flash.display.DisplayObject;
-	import flash.display.Sprite;
-	import mx.core.IUIComponent;
-	import mx.core.SpriteAsset;
-	import mx.core.UIComponent;
 	import spark.components.Group;
-	
-	
 	
 	
 	/**
@@ -16,8 +9,24 @@ package nxui.display
 	 */
 	public class RenderGroup extends Group 
 	{
+		private var rawLayers:Array = []
 		
-		public function RenderGroup() 
+		
+		override public function invalidateDisplayList() : void
+		{
+			var i:int;
+			for ( i = 0; i < numChildren; i++)
+			{
+				
+				var obj:Object = getChildAt(i);
+				// Create the instance 
+				var renderObject:Object = Stage3DRenderObject(obj).createInstance();
+				
+			}	
+		}
+		
+		
+		public function render() : void
 		{
 			
 		}

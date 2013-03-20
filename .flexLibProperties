@@ -2,14 +2,11 @@
 <flexLibProperties includeAllClasses="true" useMultiPlatformConfig="false" version="3">
   <includeClasses>
     <classEntry path="com.nxui.display.AnimationSprite"/>
-    <classEntry path="com.nxui.display.SceneProxy"/>
     <classEntry path="nxui.core.Nxui"/>
-    <classEntry path="nxui.display.IEngineDisplayProxy"/>
-    <classEntry path="nxui.display.Scene"/>
-    <classEntry path="nxui.display.StarlingProxy"/>
-    <classEntry path="nxui.display.View3DProxy"/>
     <classEntry path="nxui.transitions.IAnimatedTransition"/>
   </includeClasses>
   <includeResources/>
-  <namespaceManifests/>
+  <namespaceManifests>
+    <namespaceManifestEntry manifest="manifest.xml" namespace="http://jsoft.com/nx/2013"/>
+  </namespaceManifests>
 </flexLibProperties>

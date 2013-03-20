@@ -1,14 +1,18 @@
 package nxui.display
 {
 
-	import flash.display.DisplayObject;
-	import flash.display.Sprite;
+	import flash.display.Stage;
 	import flash.events.Event;
+	import flash.utils.describeType;
+	import flash.utils.getDefinitionByName;
+	
+	import mx.core.IVisualElement;
+	
+	import spark.components.Group;
+	
 	import nxui.core.SceneBootstrapper;
 	import nxui.core.SceneController;
-	import flash.utils.*;
 	import nxui.events.SceneEvent;
-	import spark.components.Group;
 
 	
 	/**
@@ -36,8 +40,9 @@ package nxui.display
 		public function SceneBase()
 		{
 			// Assign the controller
-			//assignControllerFromMetadata();	
-			
+			assignControllerFromMetadata();	
+			// 
+			addEventListener(flash.events.Event.INIT, onInit);
 		}
 		
 		/**
@@ -128,29 +133,29 @@ package nxui.display
 		public function set bootstrapper(val:SceneBootstrapper) : void
 		{
 			_bootstrapper = val;
+			
 		}
 		
 		//+--------------------------------------------------------------------------
 		// Overrides to handle what is allowed
 		//+--------------------------------------------------------------------------
-			
-		override public function addChild(child:DisplayObject) : DisplayObject
-		{			
-			
-			if ( child is RenderGroup) 
+		
+		public function onInit(evt:Event) : void
+		{
+			var i:int;
+			var j:int;
+			var mRenderGroup:RenderGroup;
+			for ( i = 0; i < numChildren; i++)
 			{
-				// Add the child
-				super.addChild(child);
-				// Generate it
-				generateRenderGroup(RenderGroup(child));
+				mRenderGroup = getChildAt(i) as RenderGroup;
+				for ( j = 0; j < mRenderGroup.numChildren; j++)
+				{
+					var renderObject:Stage3DRenderObject = mRenderGroup.getChildAt(j) as Stage3DRenderObject;
+					renderObject.createInstance();
+				}
 			}
-			else 
-			{
-				throw new Error("[NXUI-Scene] Must be of type RenderGroup");
-			}
-			
-			return child;
 		}
+	
 		
 		/**
 		 * Looks at the instance's metadata and if a controller is assigned then

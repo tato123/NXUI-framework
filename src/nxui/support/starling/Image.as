@@ -1,33 +1,44 @@
 package nxui.support.starling
 {
-	import flash.display.Stage;
-	import flash.display.Stage3D;
-	import starling.textures.Texture;
+	import nxui.core.Nxui;
+	import nxui.display.Stage3DRenderObject;
 	
-	import flash.geom.Rectangle;
-	import nxui.display.Stage3DRenderObject;	
-	import away3d.core.managers.Stage3DProxy;	
 	import starling.display.Image;
+	import starling.textures.Texture;
 
 
 	public class Image extends Stage3DRenderObject
 	{
-		
+		private var rawInstance:Object;
 		public var antiAlias:int;
 		[Bindable]
-		public var source:Class;
+		public var _source:Class;
 		
-		
-		
-				
-		override public function createInstance(stage:Stage, viewPort:Rectangle, stage3D:Stage3D) : Object
-		{			
-			var texture:Texture = Texture.fromBitmap(new source());
-			var img:starling.display.Image = new starling.display.Image(texture);
-			return img;
+		public function set source(val:Class) : void 
+		{
+			if ( val != null ) 
+			{
+				_source = val;
+				Nxui.current.enqueue(_source);
+			}
+						
 		}
 		
+		public function get source() : Class 
+		{
+			return _source;
+		}
 		
+		override public function createInstance() : Object
+		{
+			
+			
+			var texture:Texture = Nxui.current.assetManager.getTexture("_source");
+			var img:starling.display.Image = new starling.display.Image(texture);
+			rawInstance = img;
+			
+			return null;	
+		}
 		
 			
 		

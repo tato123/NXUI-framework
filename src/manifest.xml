@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<componentPackage>
+	
+	<!-- components -->
+	
+	<component id="View3DObject" class="nxui.support.View3DObject"/>	
+	<component id="Image" class="nxui.support.starling.Image"/>
+	
+	<component id="Nxui" class="nxui.core.Nxui"/>
+	<component id="RenderGroup" class="nxui.display.RenderGroup"/>
+	<component id="MixedScene" class="nxui.display.MixedScene"/>
+	
+</componentPackage>
